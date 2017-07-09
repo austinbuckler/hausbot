@@ -160,18 +160,35 @@ bot.on('message', async message => {
         return;
       }
       if (minValue > maxValue) {
-        updateUserMinMax(user.facebookId, maxValue, minValue).then(() => console.log(`added ${sender.id} @ ${minValue} - ${maxValue}`));
+        updateUserMinMax(user.facebookId, maxValue, minValue).then(async () => {
+          out = new Elements();
+          out.add({ text: `Fantastic ${fbUser.first_name}! I will let you know about apartments/housing in Vancouver between $${minValue} and $${maxValue}` })
+          await bot.send(user.facebookId, out);
+        });
       } else {
-        updateUserMinMax(user.facebookId, minValue, maxValue).then(() => console.log(`added ${sender.id} @ ${minValue} - ${maxValue}`));
+        updateUserMinMax(user.facebookId, minValue, maxValue).then(async () => {
+          out = new Elements();
+          out.add({ text: `Fantastic ${fbUser.first_name}! I will let you know about apartments/housing in Vancouver between $${minValue} and $${maxValue}` })
+          await bot.send(user.facebookId, out);
+        });
       }
-      out = new Elements();
-      out.add({ text: `Fantastic ${fbUser.first_name}! I will let you know about apartments/housing in Vancouver between $${minValue} and $${maxValue}` })
     } else {
+      out = new Elements();
       out.add({ text: 'You can start getting alerts about housing in Vancouver by typing your minimum price range, and maximum priceRange. Type "stop" to stop being updated on new listings.' });
+      await bot.send(user.facebookId, out);
     }
-    await bot.send(user.facebookId, out);
   });
 });
+
+bot.on('postback', async (event, message, data) => {
+  const { sender } = message;
+  let out = null;
+  if (data.action === 'GET_STARTED') {
+    out = new Elements();
+    out.add({ text: "Hey! I'm your ex-premier of pasta, Shristy Smark! I want to help you find housing in Vancouver, BC. To start, please enter a price range ex: \"650 and 1300\"." });
+    await bot.send(sender.id, out);
+  }
+})
 
 app.use('/facebook', bot.router());
 app.listen(3000, () => {
