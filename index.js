@@ -73,9 +73,14 @@ setInterval(function() {
             let bPrice = listingPriceToFloat(b.price);
             return a - b;
           });
+          let newListingsAsAry = newListings.map(listing => listingPriceToFloat(listing.price)).sort((a, b) => {
+            let aPrice = listingPriceToFloat(a);
+            let bPrice = listingPriceToFloat(b);
+            return a - b;
+          });
           let updatedListings = seenListings.concat(newListings.map(listing => listingPriceToFloat(listing.price)));
           if (updatedListings.toString() !== seenListings.toString()) {
-            await knex('users').where('id', user.id).update('seen_listings', updatedListings.toString());
+            await knex('users').where('id', user.id).update('seen_listings', newListingsAsAry.toString());
           }
           out = new Elements();
           out.add({ text: `Hey! I found you some new listings in-between ${user.minValue} and ${user.maxValue}.` });
