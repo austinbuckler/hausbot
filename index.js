@@ -205,11 +205,11 @@ app.listen(process.env.PORT || 3000, () => {
     table.integer('maxValue');
     table.boolean('active', true);
     table.text('seen_listings', '');
-    table.timestamps();
+    table.timestamps(true);
   }).then((table) => console.log('created users table'));
   knex.schema.createTableIfNotExists('listings', (table) => {
     table.increments('id');
     table.string('listingId');
-    table.timestamps();
+    table.timestamps(true);
   }).then((table) => console.log('created listings table'));
 });
