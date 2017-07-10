@@ -196,7 +196,7 @@ bot.on('postback', async (event, message, data) => {
 })
 
 app.use('/facebook', bot.router());
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log('Listening on 3000')
   knex.schema.createTableIfNotExists('users', (table) => {
     table.increments('id');
