@@ -118,7 +118,7 @@ setInterval(function() {
 function addUserIfNotExists(id) {
   return knex.select().from('users').where('facebookId', id).then((collection) => {
     if (collection.length === 0) {
-      return knex('users').insert({ facebookId: id, created_at: knex.fn.now(), updated_at: knex.fn.now() }).then((updatedCollection) => {
+      return knex('users').insert({ facebookId: id, created_at: knex.fn.now(), updated_at: knex.fn.now(), seen_listings: '' }).then((updatedCollection) => {
         return knex.select().from('users').where('id', updatedCollection[0])
       });
     }
