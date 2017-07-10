@@ -7,6 +7,8 @@ const airbrake = require('airbrake').createClient(
 
 airbrake.handleExceptions();
 
+const _ = require('lodash');
+
 const knex = require('knex')({
   dialect: 'mysql',
   connection: process.env.CLEARDB_DATABASE_URL || {
@@ -79,18 +81,14 @@ setInterval(function() {
           let out = null;
           let newListings = listings.filter((listing) => {
             let listingPrice = listingPriceToFloat(listing.price);
-            return seenListings.includes(listing) === false && listingDoesFitMinMax(listingPrice, user.minValue, user.maxValue);
+            return seenListings.includes(listing.id) === false && listingDoesFitMinMax(listingPrice, user.minValue, user.maxValue);
           }).sort((a, b) => {
             let aPrice = listingPriceToFloat(a.price);
             let bPrice = listingPriceToFloat(b.price);
             return a - b;
           });
-          let newListingsAsAry = newListings.map(listing => listingPriceToFloat(listing.price)).sort((a, b) => {
-            return a - b;
-          });
-          let updatedListings = seenListings.concat(newListings.map(listing => listingPriceToFloat(listing.price)));
-          if (updatedListings.toString() !== seenListings.toString()) {
-            await knex('users').where('id', user.id).update('seen_listings', newListingsAsAry.toString());
+          if (newListings.length > 0) {
+            await knex('users').where('id', user.id).update('seen_listings', newListings.map(listing => listing.id));
           }
           out = new Elements();
           out.add({ text: `Hey! I found you some new listings in-between ${user.minValue} and ${user.maxValue}.` });
