@@ -88,7 +88,7 @@ setInterval(function() {
             return a - b;
           });
           if (newListings.length > 0) {
-            await knex('users').where('id', user.id).update('seen_listings', newListings.map(listing => listing.id));
+            await knex('users').where('id', user.id).update('seen_listings', newListings.map(listing => listing.id).toString());
           }
           out = new Elements();
           out.add({ text: `Hey! I found you some new listings in-between ${user.minValue} and ${user.maxValue}.` });
