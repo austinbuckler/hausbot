@@ -79,8 +79,6 @@ setInterval(function() {
             return a - b;
           });
           let newListingsAsAry = newListings.map(listing => listingPriceToFloat(listing.price)).sort((a, b) => {
-            let aPrice = listingPriceToFloat(a);
-            let bPrice = listingPriceToFloat(b);
             return a - b;
           });
           let updatedListings = seenListings.concat(newListings.map(listing => listingPriceToFloat(listing.price)));
