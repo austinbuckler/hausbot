@@ -3,18 +3,23 @@
 const knex = require('knex')({
   dialect: 'mysql',
   connection: {
-    host: '127.0.0.1',
-    user: 'root',
-    password: 'asdf',
-    database: 'vancity-housing'
+    host: process.env('DB_HOST') || '127.0.0.1',
+    user: process.env('DB_USER') || 'root',
+    password: process.env('DB_PASS') || 'asdf',
+    database: process.env('DB_NAME') || 'vancity-housing'
   }
 })
+
+const facebookCredentials = {
+  token: process.env('FB_TOKEN') || 'EAATb3SIbTagBAJEGPq9R2Kf8fBjZBfvgP3iNjouZBd3NONS49CFVKsfn7Eid6eEiuIb3ZA1JE9GVsFHOW5dQoHZBUxoSv3QrZCwKggcJYOmT51IbZB3r9sclheLm3VJiN7Nm11ZC3YLRDLz4EKYTjYKRPIGJUR9or3KQDehyibBYFiMEZCAxrJ1K',
+  secret: process.env('FB_SECRET') || 'ROFLMAO'
+};
 
 const express = require('express');
 const messenger = require('facebook-messenger-bot');
 const Elements = messenger.Elements;
 const app = express();
-const bot = new messenger.Bot('EAATb3SIbTagBAJEGPq9R2Kf8fBjZBfvgP3iNjouZBd3NONS49CFVKsfn7Eid6eEiuIb3ZA1JE9GVsFHOW5dQoHZBUxoSv3QrZCwKggcJYOmT51IbZB3r9sclheLm3VJiN7Nm11ZC3YLRDLz4EKYTjYKRPIGJUR9or3KQDehyibBYFiMEZCAxrJ1K', 'ROFLMAO');
+const bot = new messenger.Bot(facebookCredentials.token, facebookCredentials.secret);
 const craigslist = require('node-craigslist');
 const craigsClient = new craigslist.Client({
   baseHost: 'craigslist.ca',
