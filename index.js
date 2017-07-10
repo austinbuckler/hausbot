@@ -1,5 +1,12 @@
 'use strict';
 
+const airbreak = require('airbreak').createClient(
+  process.env.AIRBRAKE_PROJECT_ID,
+  process.env.AIRBRAKE_API_KEY
+);
+
+airbreak.handleExceptions();
+
 const knex = require('knex')({
   dialect: 'mysql',
   connection: process.env.CLEARDB_DATABASE_URL || {

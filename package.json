@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "airbrake": "^2.0.1",
     "facebook-messenger-bot": "^0.2.0",
     "knex": "^0.13.0",
     "mysql": "^2.13.0",
