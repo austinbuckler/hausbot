@@ -1,24 +1,20 @@
 {
-  "name": "vancity-housing",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "hausbot",
+  "version": "2.0.0",
+  "private": true,
   "scripts": {
-    "start": "node ./index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
-  "engines": {
-    "node": ">= 7.6.0"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "airbrake": "^2.0.1",
-    "facebook-messenger-bot": "^0.2.0",
-    "knex": "^0.13.0",
-    "lodash": "^4.17.4",
-    "mysql": "^2.13.0",
-    "node-craigslist": "^1.1.2"
+    "date-fns": "^2.2.1",
+    "dinero.js": "^1.6.0",
+    "next": "9.0.5",
+    "node-craigslist": "^2.1.0",
+    "ramda": "^0.26.1",
+    "react": "16.9.0",
+    "react-dom": "16.9.0",
+    "use-http": "^0.1.79"
   }
 }
