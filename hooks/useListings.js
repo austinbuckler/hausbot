@@ -1,27 +1,30 @@
-import { useEffect, useReducer } from 'react'
-import { usePost } from 'use-http'
-import useStorage from './useStorage'
+import { useCallback, useEffect, useReducer } from "react";
+import useStorage from "./useStorage";
+import { config } from "../config";
 
 const DEFAULT_STATE = {
   listings: [],
-  priceRange: [1444, 2400],
+  priceRange: config.PRICE_RANGE,
   error: null,
   ids: [],
-  favorites: []
-}
+  favorites: [],
+};
 
-const ADD_LISTINGS = 'ADD_LISTINGS'
-const SET_PRICE_RANGE = 'SET_PRICE_RANGE'
-const API_ERROR = 'API_ERROR'
-const TOGGLE_FAVORITE = 'TOGGLE_FAVORITE'
+const ADD_LISTINGS = "ADD_LISTINGS";
+const SET_PRICE_RANGE = "SET_PRICE_RANGE";
+const API_ERROR = "API_ERROR";
+const TOGGLE_FAVORITE = "TOGGLE_FAVORITE";
 
 const toggleFavorite = (favorites, id) =>
-  favorites.reduce((acc, favorite, idx) => {
-    if (favorite === id) {
-      return acc
-    }
-    return acc.concat([favorite])
-  }, [id])
+  favorites.reduce(
+    (acc, favorite, idx) => {
+      if (favorite === id) {
+        return acc;
+      }
+      return acc.concat([favorite]);
+    },
+    [id]
+  );
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -29,73 +32,82 @@ const reducer = (state, action) => {
       return {
         ...state,
         listings: state.listings.concat(action.payload),
-        ids: state.ids.concat(action.payload.map(listing => listing.pid))
-      }
+        ids: state.ids.concat(action.payload.map((listing) => listing.pid)),
+      };
     case SET_PRICE_RANGE:
       return {
         ...state,
-        priceRange: action.payload
-      }
+        priceRange: action.payload,
+      };
     case TOGGLE_FAVORITE:
       return {
         ...state,
-        favorites: toggleFavorite(state.favorites, action.payload)
-      }
+        favorites: toggleFavorite(state.favorites, action.payload),
+      };
     case API_ERROR:
       return {
         ...state,
-        error: action.payload
-      }
-    default: 
-      return state
+        error: action.payload,
+      };
+    default:
+      return state;
   }
-}
+};
 
-function useListings (persistKey = 'listings') {
-  const [initialState, { setStorage, cleanup }] = useStorage(DEFAULT_STATE, persistKey)
-  const [state, dispatch] = useReducer(reducer, initialState)
-  const [data, loading, error, findListings] = usePost({
-    url: `http://localhost:3000/api/listings`,
-    headers: {
-      'Accept': 'application/json; charset=UTF-8'
-    },
-    onMount: true,
-    body: { priceRange: state.priceRange, ids: state.ids }
-  })
-
-  const find = async () => {
-      if (priceRange.length === 0) {
-        return null
+function useListings(persistKey = "listings") {
+  const [initialState, { setStorage, cleanup }] = useStorage(
+    DEFAULT_STATE,
+    persistKey
+  );
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const findListings = useCallback(async () => {
+    if (state.priceRange.length === 0) return null;
+    const body = JSON.stringify({
+      priceRange: state.priceRange,
+      ids: state.ids,
+    });
+    try {
+      const response = await fetch(`/api/listings`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json; charset=UTF-8",
+          "Content-Type": "application/json",
+        },
+        body,
+      });
+      const json = await response.json();
+      const needsUpdate = json?.listings?.length > 0;
+      if (needsUpdate) {
+        dispatch({ type: ADD_LISTINGS, payload: json.listings });
       }
-      return findListings({ priceRange: state.priceRange, ids: state.ids })
-  }
-
-  const toggleFavorite = id => dispatch({ type: TOGGLE_FAVORITE, payload: id })
-  const favoriteListings = () => state.listings.filter(listing => state.favorites.includes(listing.pid))
+      return json;
+    } catch (error) {
+      dispatch({ type: API_ERROR, payload: error });
+    }
+  }, [state]);
 
   useEffect(() => {
-    const needsUpdate = !loading && data && data.listings.length > 0
-    if (needsUpdate) {
-      dispatch({ type: ADD_LISTINGS, payload: data.listings })
-    }
-    if (error) {
-      dispatch({ type: API_ERROR, payload: error })
-    }
-  }, [data, loading, error])
+    findListings();
+  }, [findListings]);
+
+  const toggleFavorite = (id) =>
+    dispatch({ type: TOGGLE_FAVORITE, payload: id });
+  const favoriteListings = () =>
+    state.listings.filter((listing) => state.favorites.includes(listing.pid));
 
   useEffect(() => {
-    setStorage(state)
-  }, [state])
-  
+    setStorage(state);
+  }, [state]);
+
   return [
     state,
     {
-      findListings: find,
+      findListings,
       favoriteListings,
       toggleFavorite,
-      cleanup
+      cleanup,
     },
-  ]
+  ];
 }
 
-export default useListings
+export default useListings;
