@@ -2,13 +2,14 @@ import React from 'react'
 import Link from 'next/link'
 import Container from './container'
 
-const Nav = ({ setFilter }) => (
+const Nav = ({ setFilter, children }) => (
   <nav>
     <Container>
       <div>
         <h1 className='title'>hausbot</h1>
         <button type='button' onClick={() => setFilter('ALL')}>All</button>
         <button type='button' onClick={() => setFilter('FAVORITES')}>Favorites</button>
+        {children}
       </div>
     </Container>
     <style jsx>{`

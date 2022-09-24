@@ -2,13 +2,13 @@ import { useCallback, useEffect, useReducer } from "react";
 import useStorage from "./useStorage";
 import { config } from "../config";
 
-const DEFAULT_STATE = {
+const DEFAULT_STATE = (priceRange = config.PRICE_RANGE) => ({
   listings: [],
-  priceRange: config.PRICE_RANGE,
+  priceRange,
   error: null,
   ids: [],
   favorites: [],
-};
+});
 
 const ADD_LISTINGS = "ADD_LISTINGS";
 const SET_PRICE_RANGE = "SET_PRICE_RANGE";
@@ -31,8 +31,8 @@ const reducer = (state, action) => {
     case ADD_LISTINGS:
       return {
         ...state,
-        listings: state.listings.concat(action.payload),
-        ids: state.ids.concat(action.payload.map((listing) => listing.pid)),
+        listings: state.listings.concat(action.payload.filter(listing => !state.ids.includes(listing.pid))),
+        ids: state.ids.concat(action.payload.filter(listing => !state.ids.includes(listing.pid)).map((listing) => listing.pid)),
       };
     case SET_PRICE_RANGE:
       return {
@@ -54,9 +54,9 @@ const reducer = (state, action) => {
   }
 };
 
-function useListings(persistKey = "listings") {
+function useListings(priceRange = config.PRICE_RANGE, persistKey = "listings") {
   const [initialState, { setStorage, cleanup }] = useStorage(
-    DEFAULT_STATE,
+    DEFAULT_STATE(priceRange),
     persistKey
   );
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -66,6 +66,7 @@ function useListings(persistKey = "listings") {
       priceRange: state.priceRange,
       ids: state.ids,
     });
+    const abortController = new AbortController()
     try {
       const response = await fetch(`/api/listings`, {
         method: "POST",
@@ -74,26 +75,46 @@ function useListings(persistKey = "listings") {
           "Content-Type": "application/json",
         },
         body,
+        signal: abortController.signal,
       });
       const json = await response.json();
       const needsUpdate = json?.listings?.length > 0;
       if (needsUpdate) {
+        json.listings.sort((a, b) => {
+          return a.price > b.price ? 1 : -1
+        })
         dispatch({ type: ADD_LISTINGS, payload: json.listings });
       }
-      return json;
     } catch (error) {
       dispatch({ type: API_ERROR, payload: error });
+    } finally {
+      return abortController
     }
   }, [state]);
 
-  useEffect(() => {
-    findListings();
-  }, [findListings]);
+  const toggleFavorite = useCallback((id) => dispatch({ type: TOGGLE_FAVORITE, payload: id }));
+  const favoriteListings = useCallback(() =>
+    state.listings.filter((listing) => state.favorites.includes(listing.pid)), [state]);
+  const setRangeMin = useCallback((min) => dispatch({ type: SET_PRICE_RANGE, payload: [min, state.priceRange[1]] }), [state]);
+  const setRangeMax = useCallback((max) => dispatch({ type: SET_PRICE_RANGE, payload: [state.priceRange[0], max] }), [state]);
 
-  const toggleFavorite = (id) =>
-    dispatch({ type: TOGGLE_FAVORITE, payload: id });
-  const favoriteListings = () =>
-    state.listings.filter((listing) => state.favorites.includes(listing.pid));
+  useEffect(() => {
+    dispatch({ type: SET_PRICE_RANGE, payload: priceRange })
+  }, [priceRange])
+
+  useEffect(() => {
+    let controller = undefined
+    findListings().then((_controller => {
+      if (_controller) {
+        controller = _controller
+      }
+    }))
+    return () => {
+      if (controller) {
+        controller.abort();
+      }
+    }
+  }, [findListings, state.priceRange]);
 
   useEffect(() => {
     setStorage(state);
@@ -105,6 +126,8 @@ function useListings(persistKey = "listings") {
       findListings,
       favoriteListings,
       toggleFavorite,
+      setRangeMin,
+      setRangeMax,
       cleanup,
     },
   ];
